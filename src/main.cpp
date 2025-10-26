@@ -30,6 +30,33 @@
 
 #include "logic/hw_sanity.h"
 #include "logic/start_up.h"
+void MoveMotor(int motorId, long steps) {
+    switch (motorId) {
+        case 0: mi::idler.MoveSteps(steps); break;
+        case 1: ms::selector.MoveSteps(steps); break;
+        case 2: mpu::pulley.MoveSteps(steps); break;
+        default: mu::cdc.WriteLine("Invalid motor ID");
+    }
+}
+
+void CheckSerialCommands() {
+    while (mu::cdc.Available()) {
+        String cmd = mu::cdc.ReadLine(); // Reads until newline
+        cmd.trim();
+        if (cmd.length() == 0) continue;
+
+        if (cmd[0] == 'M') {
+            int spaceIndex = cmd.indexOf(' ');
+            if (spaceIndex > 1) {
+                int motorId = cmd.substring(1, spaceIndex).toInt();
+                long steps = cmd.substring(spaceIndex + 1).toInt();
+                MoveMotor(motorId, steps);
+                mu::cdc.WriteLine("Done.");
+            }
+        }
+    }
+}
+
 
 /// One-time setup of HW and SW components
 /// Called before entering the loop() function
